@@ -13,6 +13,14 @@
 #define ROM_MODULES_GPIO
 #endif
 
+#if defined(LUA_USE_MODULES_PUSH)
+#define MODULES_PUSH       "push"
+#define ROM_MODULES_PUSH   \
+    _ROM(MODULES_PUSH, luaopen_push, push_map)
+#else
+#define ROM_MODULES_PUSH
+#endif
+
 #if defined(LUA_USE_MODULES_PWM)
 #define MODULES_PWM       "pwm"
 #define ROM_MODULES_PWM   \
@@ -176,6 +184,7 @@
         ROM_MODULES_BIT     \
         ROM_MODULES_WS2812  \
         ROM_MODULES_CJSON  \
+        ROM_MODULES_PUSH	\
         ROM_MODULES_CRYPTO
 
 #endif

@@ -110,6 +110,7 @@ LINKFLAGS_eagle.app.v6 = \
 	-lmain	\
 	-ljson	\
 	-lsmartconfig	\
+	-lpush \
 	-lssl	\
 	$(DEP_LIBS_eagle.app.v6)					\
 	-Wl,--end-group			\
