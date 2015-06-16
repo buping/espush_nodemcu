@@ -54,7 +54,8 @@ static int regist(lua_State* L)
 		push_data_recved = luaL_ref(L, LUA_REGISTRYINDEX);
 	}
 
-	push_register(appid, (char*)appkey, msg_recv);
+	//(uint32 appid, char appkey[32], char devid[32], enum VERTYPE type, msg_cb msgcb);
+	push_register(appid, (char*)appkey, "NODEMCU_ANONYMOUS", VER_NODEMCU, msg_recv);
 
 	lua_pushinteger(L, 0);
 	return 1;
