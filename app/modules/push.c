@@ -32,6 +32,34 @@ void msg_recv(uint8* pdata, uint32 len)
 }
 
 
+void remote_luafile_cb(uint8* filebuf, uint32 len)
+{
+//	uart0_sendStr(filebuf);
+	if(!gL) {
+		uart0_sendStr("pls regist first.\r\n");
+		return;
+	}
+
+	int iRet = luaL_loadbuffer(gL, (const char*)filebuf, len, "REMOTE_LUAFILE_CMD");
+	if(iRet == LUA_ERRSYNTAX) {
+		uart0_sendStr("COMPILE ERROR\r\n");
+		return;
+	} else if(iRet == LUA_ERRMEM) {
+		uart0_sendStr("ERROR MEMORY\r\n");
+		return;
+	}
+
+	iRet = lua_pcall(gL, 0, 0, 0);
+	if(iRet) {
+		char iRetBuf[64] = { 0 };
+		os_sprintf(iRetBuf, "ERROR:[%s]\r\n", iRet, lua_tostring(gL, -1));
+		uart0_sendStr(iRetBuf);
+		lua_pop(gL, 1);
+		return;
+	}
+}
+
+
 static int regist(lua_State* L)
 {
 	uint32 appid = luaL_checkinteger(L, 1);
@@ -40,7 +68,7 @@ static int regist(lua_State* L)
 		return luaL_error(L, "appkey arguments error");
 	}
 
-	if(push_server_connect_status() == STATUS_CONNECTED) {
+	if(espush_server_connect_status() == STATUS_CONNECTED) {
 		return luaL_error(L, "connected.");
 	}
 
@@ -55,7 +83,8 @@ static int regist(lua_State* L)
 	}
 
 	//(uint32 appid, char appkey[32], char devid[32], enum VERTYPE type, msg_cb msgcb);
-	push_register(appid, (char*)appkey, "NODEMCU_ANONYMOUS", VER_NODEMCU, msg_recv);
+	espush_register(appid, (char*)appkey, "NODEMCU_ANONYMOUS", VER_NODEMCU, msg_recv);
+	espush_luafile_cb(remote_luafile_cb);
 
 	lua_pushinteger(L, 0);
 	return 1;
@@ -64,14 +93,17 @@ static int regist(lua_State* L)
 
 static int unregist(lua_State* L)
 {
-	push_unregister();
+	espush_unregister();
+	luaL_unref(L, LUA_REGISTRYINDEX, push_data_recved);
+	gL = NULL;
+	push_data_recved = LUA_NOREF;
 	return 0;
 }
 
 
 static int get_status(lua_State* L)
 {
-	lua_pushinteger(L, push_server_connect_status());
+	lua_pushinteger(L, espush_server_connect_status());
 	return 1;
 }
 
@@ -80,7 +112,7 @@ static int pushmsg(lua_State* L)
 {
 	size_t msg_length = 0;
 	const char* msg = luaL_checklstring(L, 1, &msg_length);
-	sint8 iRet = push_msg((uint8*)msg, msg_length);
+	sint8 iRet = espush_msg((uint8*)msg, msg_length);
 
 	lua_pushinteger(L, iRet);
 	return 1;
