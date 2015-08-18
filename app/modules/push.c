@@ -18,9 +18,16 @@
 
 static int push_data_recved = LUA_NOREF;
 static lua_State* gL = NULL;
+static lua_State* gL_rtstatus = NULL;
+
 
 void msg_recv(uint8* pdata, uint32 len)
 {
+	if(!gL) {
+		uart0_sendStr("pls regist first.\r\n");
+		return;
+	}
+
 	if(push_data_recved == LUA_NOREF) {
 		return;
 	}
@@ -29,6 +36,25 @@ void msg_recv(uint8* pdata, uint32 len)
 
 	lua_pushlstring(gL, (const char*)pdata, len);
 	lua_call(gL, 1, 0);
+}
+
+
+/*
+ * 实时状态获取的回调函数
+ */
+void rtstatus_cb_func(uint32 msgid, char* key, int16_t length)
+{
+	if(!gL_rtstatus) {
+		uart0_sendStr("pls regist first.\r\n");
+		return;
+	}
+
+	lua_pushstring(gL_rtstatus, key);
+	lua_gettable(gL_rtstatus, LUA_REGISTRYINDEX);
+	lua_call(gL_rtstatus, 0, 1);
+	const char* result = lua_tostring(gL_rtstatus, -1);
+
+	espush_rtstatus_ret_to_gateway(msgid, result, lua_strlen(gL_rtstatus, -1));
 }
 
 
@@ -85,6 +111,7 @@ static int regist(lua_State* L)
 	//(uint32 appid, char appkey[32], char devid[32], enum VERTYPE type, msg_cb msgcb);
 	espush_register(appid, (char*)appkey, "NODEMCU_ANONYMOUS", VER_NODEMCU, msg_recv);
 	espush_luafile_cb(remote_luafile_cb);
+	espush_rtstatus_cb(rtstatus_cb_func);
 
 	lua_pushinteger(L, 0);
 	return 1;
@@ -119,6 +146,24 @@ static int pushmsg(lua_State* L)
 }
 
 
+static int set_status_flag(lua_State* L)
+{
+	const char* flag_key = luaL_checkstring(L, 1);
+	if(!flag_key || os_strlen(flag_key) <= 0) {
+		uart0_sendStr("KEY ERROR");
+		return luaL_error(L, "appkey arguments error");
+	}
+	gL_rtstatus = L;
+	if (lua_type(L, 2) == LUA_TFUNCTION || lua_type(L, 2) == LUA_TLIGHTFUNCTION) {
+		lua_pushstring(L, flag_key);
+		lua_pushvalue(L, 2);
+		lua_settable(L, LUA_REGISTRYINDEX);
+	}
+
+	return 0;
+}
+
+
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
 
@@ -128,6 +173,7 @@ const LUA_REG_TYPE push_map[] = {
 	{LSTRKEY("unregist"), LFUNCVAL(unregist)},
 	{LSTRKEY("get_status"), LFUNCVAL(get_status)},
 	{LSTRKEY("pushmsg"), LFUNCVAL(pushmsg)},
+	{LSTRKEY("set_status_flag"), LFUNCVAL(set_status_flag)},
 
 	{LSTRKEY("CONNECTING"), LNUMVAL(STATUS_CONNECTING)},
 	{LSTRKEY("DNS_LOOKUP"), LNUMVAL(STATUS_DNS_LOOKUP)},
