@@ -44,15 +44,17 @@ void msg_recv(uint8* pdata, uint32 len)
  */
 void rtstatus_cb_func(uint32 msgid, char* key, int16_t length)
 {
+	ESP_DBG("msgid: [%d], key:[%p],[%d],[%s]\n", msgid, key, length, key);
 	if(!gL_rtstatus) {
 		uart0_sendStr("pls regist first.\r\n");
 		return;
 	}
 
-	lua_pushstring(gL_rtstatus, key);
+	lua_pushlstring(gL_rtstatus, key, length);
 	lua_gettable(gL_rtstatus, LUA_REGISTRYINDEX);
 	lua_call(gL_rtstatus, 0, 1);
 	const char* result = lua_tostring(gL_rtstatus, -1);
+	ESP_DBG("result: [%p]\n", result);
 
 	espush_rtstatus_ret_to_gateway(msgid, result, lua_strlen(gL_rtstatus, -1));
 }
