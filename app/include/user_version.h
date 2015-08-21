@@ -7,6 +7,6 @@
 #define NODE_VERSION_INTERNAL   0U
 
 #define NODE_VERSION	"NodeMCU 0.9.6"
-#define BUILD_DATE	    "build 20150406"
+#define BUILD_DATE	    "build 20150406" " espush.cn 20150821-master-be33ddc5"
 
 #endif	/* __USER_VERSION_H__ */
