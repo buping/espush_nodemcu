@@ -7,6 +7,9 @@
 #include <c_types.h>
 #include <osapi.h>
 
+#define MAX_SSID_LENGTH 128
+#define MAX_PWD_LENGTH 32
+
 /*
  * push.regist(appid, appkey, function(msg));
  * push.unregist();
@@ -60,6 +63,26 @@ void rtstatus_cb_func(uint32 msgid, char* key, int16_t length)
 }
 
 
+typedef struct {
+	char* buf;
+	uint32 len;
+}code_laoder_s;
+/*
+ * Lua code loader function.
+ */
+const char * lua_code_loader(lua_State *L, void *data, size_t *size)
+{
+	code_laoder_s* loader = (code_laoder_s*)data;
+	if(loader->len) {
+		*size = loader->len;
+		loader->len = 0;
+		return loader->buf;
+	}
+
+	return NULL;
+}
+
+
 void remote_luafile_cb(uint8* filebuf, uint32 len)
 {
 //	uart0_sendStr(filebuf);
@@ -68,7 +91,11 @@ void remote_luafile_cb(uint8* filebuf, uint32 len)
 		return;
 	}
 
-	int iRet = luaL_loadbuffer(gL, (const char*)filebuf, len, "REMOTE_LUAFILE_CMD");
+	code_laoder_s loader;
+	loader.buf = filebuf;
+	loader.len = len;
+	//int iRet = luaL_loadbuffer(gL, (const char*)filebuf, len, "REMOTE_LUAFILE_CMD");
+	int iRet = lua_load(gL, lua_code_loader, &loader, "REMOTE_LUAFILE_CMD");
 	if(iRet == LUA_ERRSYNTAX) {
 		uart0_sendStr("COMPILE ERROR\r\n");
 		return;
@@ -166,6 +193,37 @@ static int set_status_flag(lua_State* L)
 }
 
 
+static int apnet(lua_State* L)
+{
+	const char* ssid = luaL_checkstring(L, 1);
+	const char* pwd = luaL_checkstring(L, 2);
+	if(!ssid || os_strlen(ssid) <= 0 || os_strlen(ssid) > MAX_SSID_LENGTH) {
+		return luaL_error(L, "ssid error");
+	}
+	if(!pwd || os_strlen(pwd) <= 0 || os_strlen(pwd) > MAX_PWD_LENGTH) {
+		return luaL_error(L, "ssid error");
+	}
+
+	espush_local_init(ssid, pwd);
+	return 0;
+}
+
+
+static int smartconfig(lua_State* L)
+{
+	espush_network_cfg_by_smartconfig();
+
+	return 0;
+}
+
+
+static int version(lua_State* L)
+{
+	lua_pushstring(L, ESPUSH_VERSION);
+
+	return 1;
+}
+
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
 
@@ -176,6 +234,9 @@ const LUA_REG_TYPE push_map[] = {
 	{LSTRKEY("get_status"), LFUNCVAL(get_status)},
 	{LSTRKEY("pushmsg"), LFUNCVAL(pushmsg)},
 	{LSTRKEY("set_status_flag"), LFUNCVAL(set_status_flag)},
+	{LSTRKEY("smartconfig"), LFUNCVAL(smartconfig)},
+	{LSTRKEY("apnet"), LFUNCVAL(apnet)},
+	{LSTRKEY("version"), LFUNCVAL(version)},
 
 	{LSTRKEY("CONNECTING"), LNUMVAL(STATUS_CONNECTING)},
 	{LSTRKEY("DNS_LOOKUP"), LNUMVAL(STATUS_DNS_LOOKUP)},
