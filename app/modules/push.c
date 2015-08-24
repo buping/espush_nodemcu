@@ -192,7 +192,12 @@ static int set_status_flag(lua_State* L)
 	return 0;
 }
 
-
+/*
+ * 此处也是入口之一
+ * 所以也需要配置luafile_cb
+ * 以及配置rtstatus_cb
+ * 由于指向了同一处地址，所以与其他入口也不构成冲突
+ */
 static int apnet(lua_State* L)
 {
 	const char* ssid = luaL_checkstring(L, 1);
@@ -204,7 +209,10 @@ static int apnet(lua_State* L)
 		return luaL_error(L, "ssid error");
 	}
 
-	espush_local_init(ssid, pwd);
+	espush_local_init(ssid, pwd, VER_NODEMCU, msg_recv);
+	espush_luafile_cb(remote_luafile_cb);
+	espush_rtstatus_cb(rtstatus_cb_func);
+
 	return 0;
 }
 
