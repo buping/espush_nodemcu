@@ -125,21 +125,10 @@ void nodemcu_init(void)
 *******************************************************************************/
 void user_init(void)
 {
-    // NODE_DBG("SDK version:%s\n", system_get_sdk_version());
-    // system_print_meminfo();
-    // os_printf("Heap size::%d.\n",system_get_free_heap_size());
-    // os_delay_us(50*1000);   // delay 50ms before init uart
+    NODE_DBG("SDK version:%s\n", system_get_sdk_version());
 
-#ifdef DEVELOP_VERSION
-    uart_init(BIT_RATE_74880, BIT_RATE_74880);
-#else
     uart_init(BIT_RATE_9600, BIT_RATE_9600);
-#endif
-    // uart_init(BIT_RATE_115200, BIT_RATE_115200);
-    
-    #ifndef NODE_DEBUG
-    system_set_os_print(0);
-    #endif
+    os_install_putc1((void*)uart1_putc);
     
     system_init_done_cb(nodemcu_init);
 }
