@@ -169,28 +169,6 @@ void ICACHE_FLASH_ATTR uart0_putc(const char c)
 }
 
 /******************************************************************************
- * FunctionName : uart0_putc
- * Description  : use uart0 to transfer char
- * Parameters   : uint8 c - send char
- * Returns      :
-*******************************************************************************/
-void ICACHE_FLASH_ATTR uart1_putc(const char c)
-{
-  if (c == '\n')
-  {
-    uart_tx_one_char(UART1, '\r');
-    uart_tx_one_char(UART1, '\n');
-  }
-  else if (c == '\r')
-  {
-  }
-  else
-  {
-    uart_tx_one_char(UART1, c);
-  }
-}
-
-/******************************************************************************
  * FunctionName : uart0_rx_intr_handler
  * Description  : Internal used function
  *                UART0 interrupt handler, add self handle code inside

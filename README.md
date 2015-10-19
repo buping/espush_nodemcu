@@ -1,5 +1,5 @@
 # **NodeMCU** #
-version 0.9.6
+version 0.9.5
 
 [![Join the chat at https://gitter.im/nodemcu/nodemcu-firmware](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nodemcu/nodemcu-firmware?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/nodemcu/nodemcu-firmware.svg)](https://travis-ci.org/nodemcu/nodemcu-firmware)  [![Download](https://img.shields.io/badge/download-~400k-orange.svg)](https://github.com/nodemcu/nodemcu-firmware/releases/latest)
@@ -36,76 +36,40 @@ Tencent QQ group: 309957875<br />
 - cross compiler (done)
 
 # Change log
-2015-04-06<br />
-bump version to 0.9.6. not follow sdk version any more.<br />
-fix mqtt module bugs. please see examples [mqtt](https://github.com/nodemcu/nodemcu-firmware/tree/master/lua_examples/mqtt).<br />
-fix dht lib.<br />
-update spiffs to V0.3.0.<br />
-enhancement for wifi.ap submodule.<br />
-wifi.sta.config (wifi_station_config):
-- range checking password length (8~64)
+2015-06-27<br />
+fixed ap/station-ap cannot connect to the device.<br />
+added wifi.ap.getconfig().<br />
+fixed net.dns.getdnsserver().<br />
+added new base64 lua example.<br />
+added node.bootreason() to inspect boot cause.<br />
+optimization of u8g.<br />
 
-wifi.ap.config (wifi_ap_config):
-- range checking ssid length (1~32)
-- range checking pwd length (8~64)
-- new params:
-  - auth: wifi.OPEN, wifi.WPA_PSK, wifi.WPA2_PSK, wifi.WPA_WPA2_PSK
-    - default WITH pwd: wifi.WPA_WPA2_PSK
-    - default WITHOUT pwd: wifi.OPEN
-  - channel: 1~13 (default: 6)
-  - hidden: 0/1 (default: 0)
-  - max: 1~4 (default: 4)
-  - beacon: 100~60000ms (default: 100)
-
-wifi.ap.getclient (wifi_ap_listclient):
-- returns table(mac,ip) of all connected clients
-
-wifi.ap.dhcp:
-- new submodule
-- config (wifi_ap_dhcp_config), returns start/end ips
-  - params:
-    - start (e.g., "192.168.1.100")
-  - end ip calculated from wifi.ap.config.max
-- start (wifi_ap_dhcp_start), returns boolean
-- stop (wifi_ap_dhcp_stop), returns boolean
+# Change log
+2015-06-25<br />
+move constants to ROM. Frees up 16k+ of RAM.<br />
+add dhtlib for DHT11/21/22/33/44, port from Arduino.<br />
+add 433MHz transmission.<br />
+add crypto library.<br />
+re-add ws2812.write().<br />
+add wifi.getchannel.<br />
+changed wifi_setip() to allow setting SoftAP gateway to 0.0.0.0.<br />
+added net.dns.setdnsserver and net.dns.getdnsserver.<br />
+add support for lm92 temperature sensor.<br />
+implement getStrWidth() and setFontLineSpacingFactor().<br />
+add -Os flag to release and debug builds.<br />
+changed output format of table that is output by wifi_scan_done.<br />
+added ability to set scan configuration to wifi.sta.getap.<br />
+added function wifi.sta.getconfig().<br />
+allow connecting to unsecured WiFi networks.<br />
+add setphymode and getphymode to wifi module.<br />
+add multicastJoin and multicastLeave to net module.<br />
+add Yeelink Modules.<br />
 
 2015-03-31<br />
 polish mqtt module, add queue for mqtt module.<br />
 add reconnect option to mqtt.connect api, :connect( host, port, secure, auto_reconnect, function(client) )<br />
 move node.readvdd33 to adc.readvdd33.<br />
 tools/esptool.py supported NodeMCU devkit automatic flash.
-
-2015-03-18<br />
-update u8glib.<br />
-merge everything to master.
-
-2015-03-17<br />
-add cjson module, only cjson.encode() and cjson.decode() is implemented.<br />
-read doc [here](https://github.com/nodemcu/nodemcu-firmware/blob/master/app/cjson/manual.txt)
-
-2015-03-15<br />
-bugs fixed: #239, #273.<br />
-reduce coap module memory usage, add coap module to default built.
-
-2015-03-11<br />
-fix bugs of spiffs.<br />
-build both float and integer version [latest releases](https://github.com/nodemcu/nodemcu-firmware/releases/latest).<br />
-fix tmr.time().<br />
-fix memory leak when DNS fail.
-
-2015-03-10<br />
-update to the recent spiffs.<br />
-add file.fsinfo() api, usage: remain, used, total = file.fsinfo().<br />
-add Travis CI. please download the latest firmware from [releases](https://github.com/nodemcu/nodemcu-firmware/releases).<br />
-add math lib, partial api work.<br />
-u8g module, ws2812 module default enabled in dev-branch build.
-
-2015-02-13<br />
-add node.compile() api to compile lua text file into lua bytecode file.<br />
-this will reduce memory usage noticeably when require modules into NodeMCU.<br />
-raise internal LUA_BUFFERSIZE from 1024 to 4096.<br />
-lua require("mod") will load "mod.lc" file first if exist.<br />
-build latest pre_build bin.
 
 [more change log](https://github.com/nodemcu/nodemcu-firmware/wiki)<br />
 
@@ -178,6 +142,11 @@ build latest pre_build bin.
 #define LUA_USE_MODULES_CJSON
 #endif /* LUA_USE_MODULES */
 ```
+#Online firmware custom build
+
+For many application, some modules are not used, remove them can free many memory.<br />
+
+Please try Marcel's [NodeMCU custom builds](http://frightanic.com/nodemcu-custom-build) cloud service and you can get your own firmware.<br />
 
 #Flash the firmware
 nodemcu_latest.bin: 0x00000<br />
@@ -192,6 +161,13 @@ Or, if you build your own bin from source code.<br />
 
 #Connect the hardware in serial
 baudrate:9600
+
+#Write Lua script to filesystem
+####Esplorer
+Victor Brutskiy's [Esplorer](https://github.com/4refr0nt/ESPlorer) support most platforms such as Linux, Windows, Mac OS, etc. This software is opensource and can write lua/lc files to filesystem.
+
+####NodeMCU Studio
+[NodeMCU Studio](https://github.com/nodemcu/nodemcu-studio-csharp) is written in C# and support Windows. This software is opensource and can write lua files to filesystem.
 
 #Start play
 
@@ -242,8 +218,44 @@ baudrate:9600
     end)
 ```
 
-#### MQTT examples
-please see [mqtt examples](https://github.com/nodemcu/nodemcu-firmware/tree/master/lua_examples/mqtt)
+####Connect to MQTT Broker
+
+```lua
+-- init mqtt client with keepalive timer 120sec
+m = mqtt.Client("clientid", 120, "user", "password")
+
+-- setup Last Will and Testament (optional)
+-- Broker will publish a message with qos = 0, retain = 0, data = "offline"
+-- to topic "/lwt" if client don't send keepalive packet
+m:lwt("/lwt", "offline", 0, 0)
+
+m:on("connect", function(con) print ("connected") end)
+m:on("offline", function(con) print ("offline") end)
+
+-- on publish message receive event
+m:on("message", function(conn, topic, data)
+  print(topic .. ":" )
+  if data ~= nil then
+    print(data)
+  end
+end)
+
+-- m:connect( host, port, secure, auto_reconnect, function(client) )
+-- for secure: m:connect("192.168.11.118", 1880, 1, 0)
+-- for auto-reconnect: m:connect("192.168.11.118", 1880, 0, 1)
+m:connect("192.168.11.118", 1880, 0, 0, function(conn) print("connected") end)
+
+-- subscribe topic with qos = 0
+m:subscribe("/topic",0, function(conn) print("subscribe success") end)
+-- or subscribe multiple topic (topic/0, qos = 0; topic/1, qos = 1; topic2 , qos = 2)
+-- m:subscribe({["topic/0"]=0,["topic/1"]=1,topic2=2}, function(conn) print("subscribe success") end)
+-- publish a message with data = hello, QoS = 0, retain = 0
+m:publish("/topic","hello",0,0, function(conn) print("sent") end)
+
+m:close();  -- if auto-reconnect == 1, will disable auto-reconnect and then disconnect from host.
+-- you can call m:connect again
+
+```
 
 #### UDP client and server
 ```lua

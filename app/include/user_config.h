@@ -23,7 +23,6 @@
 
 #define NODE_ERROR
 
-//#define NODE_DEBUG
 #ifdef NODE_DEBUG
 #define NODE_DBG c_printf
 #else

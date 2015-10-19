@@ -250,5 +250,6 @@ $(foreach image,$(GEN_IMAGES),$(eval $(call MakeImage,$(basename $(image)))))
 #
 
 INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(PDIR)include/$(TARGET)
+INCLUDES += -I $(PDIR)extra_include
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile

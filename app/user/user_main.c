@@ -16,6 +16,7 @@
 
 #include "flash_fs.h"
 #include "user_interface.h"
+#include "user_exceptions.h"
 
 #include "ets_sys.h"
 #include "driver/uart.h"
@@ -24,6 +25,21 @@
 #define SIG_LUA 0
 #define TASK_QUEUE_LEN 4
 os_event_t *taskQueue;
+
+
+/* Note: the trampoline *must* be explicitly put into the .text segment, since
+ * by the time it is invoked the irom has not yet been mapped. This naturally
+ * also goes for anything the trampoline itself calls.
+ */
+void user_start_trampoline (void) TEXT_SECTION_ATTR;
+void user_start_trampoline (void)
+{
+   __real__xtos_set_exception_handler (
+     EXCCAUSE_LOAD_STORE_ERROR, load_non_32_wide_handler);
+
+  call_user_start ();
+}
+
 
 void task_lua(os_event_t *e){
     char* lua_argv[] = { (char *)"lua", (char *)"-i", NULL };
@@ -125,10 +141,14 @@ void nodemcu_init(void)
 *******************************************************************************/
 void user_init(void)
 {
-    NODE_DBG("SDK version:%s\n", system_get_sdk_version());
+    // NODE_DBG("SDK version:%s\n", system_get_sdk_version());
+    // system_print_meminfo();
+    // os_printf("Heap size::%d.\n",system_get_free_heap_size());
+    // os_delay_us(50*1000);   // delay 50ms before init uart
 
-    uart_init(BIT_RATE_9600, BIT_RATE_9600);
-    os_install_putc1((void*)uart1_putc);
+    uart_init(BIT_RATE_115200, BIT_RATE_115200);
+    
+    system_set_os_print(1);
     
     system_init_done_cb(nodemcu_init);
 }
